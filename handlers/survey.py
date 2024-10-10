@@ -8,7 +8,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove, ReplyKeyboardMarkup
 
 from db_utils.db_handler import check_and_save_survey
-from utils.texts import group_descriptions, message_example, create_survey_text
+from utils.texts import group_descriptions, message_example
 from utils.variants import available_groups, available_event_styles
 from keyboards.inline_row import make_inline_keyboard
 import requests
@@ -287,7 +287,15 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
         await state.update_data(event_tags=message.text)
     await state.set_state(EventSurvey.survey_finished)
     data = await state.get_data()
-    survey_text = create_survey_text(data)
+    survey_text = ""
+    survey_text += f"<b>Название мероприятия: </b> {data['event_name']}\n"
+    survey_text += f"<b>Дата и время: </b> {data['event_date']}\n"
+    survey_text += f"<b>Формат мероприятия: </b> {data['event_style']}\n"
+    survey_text += f"<b>Местоположение: </b> {data['event_location']}\n"
+    survey_text += f"<b>Описание: </b> {data['event_description']}\n"
+    survey_text += f"<b>Контактная информация: </b> {data['event_contacts']}\n"
+    survey_text += f"<b>Ссылка на регистрацию: </b> {data['event_url']}\n"
+    survey_text += f"<b>Ключевые слова(теги): </b> {data['event_tags']}\n"
     await state.update_data(survey_text=survey_text)
     await message.answer(
         text="<b>Ваша анкета:</b>\n" + survey_text,
