@@ -1,2 +1,12 @@
 group_descriptions = "Тематика группы @itsysdes_events: интеграция систем, проектирование баз данных, разработка требований,UML, SQL.\nТематика группы @product_events: продуктовая аналитика, Amplitude.\nТематика группы @data_analysis_jobs: аналитика данных, Power BI, Clickhouse."
 message_example = "Все ивенты в нашей группе соответствуют форме:\n\n\tНазвание мероприятия: [текст]\n\tДата и время: [текст]\n\tФормат мероприятия: [онлайн/офлайн/вебинар]\n\tМестоположение: [адрес или ссылка]\n\tОписание: [текст]\n\tКонтактная информация: [имя, email или телефон]\n\tСсылка на регистрацию: [URL]\n\tКлючевые слова (теги): [слова через запятую, или же теги]\n"
+def create_survey_text(data):
+    survey_text = ""
+    survey_text += f"<b>Название мероприятия: </b> {data['event_name']}\n"
+    survey_text += f"<b>Дата и время: </b> {data['event_date']}\n"
+    survey_text += f"<b>Формат мероприятия: </b> {data['event_style']}\n"
+    survey_text += f"<b>Местоположение: </b> {data['event_location']}\n"
+    survey_text += f"<b>Описание: </b> {data['event_description']}\n"
+    survey_text += f"<b>Контактная информация: </b> {data['event_contacts']}\n"
+    survey_text += f"<b>Ссылка на регистрацию: </b> {data['event_url']}\n"
+    survey_text += f"<b>Ключевые слова(теги): </b> {data['event_tags']}\n"
