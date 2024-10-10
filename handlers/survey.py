@@ -85,7 +85,7 @@ async def back_command(message: Message, state: FSMContext) -> None:
 async def cmd_choosing_group(message: Message, state: FSMContext) -> None:
     await state.set_state(EventSurvey.choosing_group)
     await message.answer(
-        text="Выберите группу для публикации ивента.\n" + group_descriptions,
+        text="Выберите группу для публикации ивента:\n" + group_descriptions,
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
@@ -121,7 +121,7 @@ async def input_event_name(message: Message, state: FSMContext) -> None:
         "\nХорошо, приступим к заполнению анкеты\n\n"
     )
     await message.answer(
-        text="<b>Введите название события:</b>",
+        text="<b>Введите название события:</b>\nНапример, 'Вебинар по цифровому маркетингу'\n",
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
@@ -142,7 +142,7 @@ async def input_date_time(message: Message, state: FSMContext) -> None:
         await state.update_data(event_name=message.text)
     await state.set_state(EventSurvey.input_date_time)
     await message.answer(
-        text="<b>Хорошо, введите дату проведения события:</b>",
+        text="<b>Хорошо, введите дату проведения события:</b>\nНапример, '25 октября 2024 года, 15:00 - 17:00'\n",
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
@@ -185,7 +185,7 @@ async def input_location(callback: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(event_style=callback.data)
     await state.set_state(EventSurvey.input_location)
     await callback.message.answer(
-        text="<b>Хорошо, введите местоположение события</b>",
+        text="<b>Хорошо, введите местоположение события:</b>\nZoom (ссылка для подключения будет отправлена на email)",
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
@@ -205,7 +205,9 @@ async def input_description(message: Message, state: FSMContext) -> None:
         await state.update_data(event_location=message.text)
     await state.set_state(EventSurvey.input_description)
     await message.answer(
-        text="<b>Следующий шаг - введите описание события:</b>",
+        text='<b>Следующий шаг - введите описание события:</b>\nНа этом вебинаре вы узнаете о современных стратегиях '
+             'цифрового маркетинга'
+             '\nи получите практические советы от экспертов отрасли.\n',
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
@@ -225,7 +227,7 @@ async def input_contacts(message: Message, state: FSMContext) -> None:
         await state.update_data(event_description=message.text)
     await state.set_state(EventSurvey.input_contacts)
     await message.answer(
-        text="<b>Теперь введите свои контакты:</b>",
+        text="<b>Теперь введите свои контакты:</b>\nНапример, Иван Иванов @ivanivanov\n",
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
@@ -245,7 +247,7 @@ async def input_registration_url(message: Message, state: FSMContext) -> None:
         await state.update_data(event_contacts=message.text)
     await state.set_state(EventSurvey.input_registration_url)
     await message.answer(
-        text="<b>Введите ссылку для регистрации на мероприятие</b>",
+        text="<b>Введите ссылку для регистрации на мероприятие:</b>Например, 'https://example.com/register'\n",
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
@@ -265,7 +267,7 @@ async def input_tags(message: Message, state: FSMContext) -> None:
         await state.update_data(event_url=message.text)
     await state.set_state(EventSurvey.input_tags)
     await message.answer(
-        text="<b>Почти закончили! Введите теги:</b>",
+        text="<b>Почти закончили! Введите теги:</b>\nНапример, маркетинг, вебинар, цифровые технологии, обучение\n",
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
@@ -344,7 +346,7 @@ async def post_message(message: Message, state: FSMContext) -> None:
         response = requests.post(url, data=data)
 
         await message.answer(
-            "Заполните еще одну вакансию!",
+            "Заполните еще одну анкету!",
             reply_markup=ReplyKeyboardMarkup(
                 keyboard=[
                     [
