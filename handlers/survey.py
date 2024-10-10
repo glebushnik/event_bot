@@ -55,7 +55,8 @@ async def intermediate_function(message: Message, state: FSMContext, callback_da
 @router.message(Command("Выход"))
 async def exit_command(message: Message, state: FSMContext) -> None:
     await message.answer(
-        text="Вы вышли из анкеты!\nМожете начать заново, введите /start"
+        text="Вы вышли из анкеты!\nМожете начать заново, введите /start",
+        reply_markup=ReplyKeyboardRemove()
     )
 
 
@@ -85,7 +86,7 @@ async def back_command(message: Message, state: FSMContext) -> None:
 async def cmd_choosing_group(message: Message, state: FSMContext) -> None:
     await state.set_state(EventSurvey.choosing_group)
     await message.answer(
-        text="Выберите группу для публикации ивента:\n" + group_descriptions,
+        text="<b>Выберите группу для публикации ивента:</b>\n" + group_descriptions,
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
@@ -247,7 +248,7 @@ async def input_registration_url(message: Message, state: FSMContext) -> None:
         await state.update_data(event_contacts=message.text)
     await state.set_state(EventSurvey.input_registration_url)
     await message.answer(
-        text="<b>Введите ссылку для регистрации на мероприятие:</b>Например, 'https://example.com/register'\n",
+        text="<b>Введите ссылку для регистрации на мероприятие:</b>\nНапример, 'https://example.com/register'\n",
         reply_markup=ReplyKeyboardMarkup(
                     keyboard=[
                         [
