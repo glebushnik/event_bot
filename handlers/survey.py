@@ -55,53 +55,61 @@ async def intermediate_function(message: Message, state: FSMContext, callback_da
 
 @router.message(Command("Выход"))
 async def exit_command(message: Message, state: FSMContext) -> None:
-    await message.answer(
-        text="Вы вышли из анкеты!\nМожете начать заново, введите /start",
-        reply_markup=ReplyKeyboardRemove()
-    )
+    if message.chat.id < 0:
+        pass
+    else:
+        await message.answer(
+            text="Вы вышли из анкеты!\nМожете начать заново, введите /start",
+            reply_markup=ReplyKeyboardRemove()
+        )
 
 
 @router.message(Command("предыдущий_шаг"))
 async def back_command(message: Message, state: FSMContext) -> None:
-    current_state = await state.get_state()
-    if current_state == "EventSurvey:event_name_inserted":
-        await cmd_choosing_group(message, state)
-    elif current_state == "EventSurvey:date_time_inserted":
-        await input_event_name(message, state)
-    elif current_state == "EventSurvey:choosing_event_style":
-        await input_date_time(message, state)
-    elif current_state == "EventSurvey:location_inserted":
-        await choosing_event_style(message, state)
-    elif current_state == "EventSurvey:description_inserted":
-        # Вызов промежуточной функции вместо input_location напрямую
-        await intermediate_function(message, state, 'callback_data_placeholder')  # Укажите нужные данные
-    elif current_state == "EventSurvey:contacts_inserted":
-        await input_description(message, state)
-    elif current_state == "EventSurvey:registration_url_inserted":
-        await input_contacts(message, state)
-    elif current_state == "EventSurvey:tags_inserted":
-        await input_registration_url(message, state)
+    if message.chat.id < 0:
+        pass
+    else:
+        current_state = await state.get_state()
+        if current_state == "EventSurvey:event_name_inserted":
+            await cmd_choosing_group(message, state)
+        elif current_state == "EventSurvey:date_time_inserted":
+            await input_event_name(message, state)
+        elif current_state == "EventSurvey:choosing_event_style":
+            await input_date_time(message, state)
+        elif current_state == "EventSurvey:location_inserted":
+            await choosing_event_style(message, state)
+        elif current_state == "EventSurvey:description_inserted":
+            await intermediate_function(message, state, 'callback_data_placeholder')
+        elif current_state == "EventSurvey:contacts_inserted":
+            await input_description(message, state)
+        elif current_state == "EventSurvey:registration_url_inserted":
+            await input_contacts(message, state)
+        elif current_state == "EventSurvey:tags_inserted":
+            await input_registration_url(message, state)
 
 
 # Команда начала опроса
 @router.message(Command("survey"))
 async def cmd_choosing_group(message: Message, state: FSMContext) -> None:
-    await state.set_state(EventSurvey.choosing_group)
-    await message.answer(
-        text="<b>Выберите группу для публикации ивента:</b>\n" + group_descriptions,
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="/Выход")
-                ]
-            ],
-            resize_keyboard=True,
-        ),
-    )
-    await message.answer(
-        text="Доступные варианты:\n\n",
-        reply_markup=make_inline_keyboard(available_groups),
-    )
+    if message.chat.id < 0:
+        pass
+    else:
+        await state.set_state(EventSurvey.choosing_group)
+        await message.answer(
+            text="<b>Выберите группу для публикации ивента:</b>\n" + group_descriptions,
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text="/Выход")
+                    ]
+                ],
+                resize_keyboard=True,
+            ),
+        )
+        await message.answer(
+            text="Доступные варианты:\n\n",
+            reply_markup=make_inline_keyboard(available_groups),
+        )
 
 
 # Обработчик выбора группы

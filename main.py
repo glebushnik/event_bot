@@ -27,8 +27,7 @@ dp = Dispatcher(storage=MemoryStorage())
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message):
-    print(message.chat.username)
-    if "@"+message.chat.username in available_groups:
+    if message.chat.id < 0:
         pass
     else:
         await message.answer(
