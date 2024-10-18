@@ -1,6 +1,6 @@
 import os
 
-from aiogram import Router, F
+from aiogram import Router, F, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
@@ -16,6 +16,7 @@ from aiogram.types import KeyboardButton
 
 router = Router()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
 
 class EventSurvey(StatesGroup):
     survey_finished = State()
@@ -81,6 +82,7 @@ async def back_command(message: Message, state: FSMContext) -> None:
     elif current_state == "EventSurvey:tags_inserted":
         await input_registration_url(message, state)
 
+
 # Команда начала опроса
 @router.message(Command("survey"))
 async def cmd_choosing_group(message: Message, state: FSMContext) -> None:
@@ -88,13 +90,13 @@ async def cmd_choosing_group(message: Message, state: FSMContext) -> None:
     await message.answer(
         text="<b>Выберите группу для публикации ивента:</b>\n" + group_descriptions,
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
     await message.answer(
         text="Доступные варианты:\n\n",
@@ -109,8 +111,8 @@ async def offer_message_example(callback: CallbackQuery, state: FSMContext) -> N
         await state.update_data(chosen_group=callback.data)
     await state.set_state(EventSurvey.offer_message_example)
     await callback.message.answer(
-         message_example,
-         reply_markup= ReplyKeyboardRemove()
+        message_example,
+        reply_markup=ReplyKeyboardRemove()
     )
     await input_event_name(callback.message, state)
 
@@ -124,17 +126,16 @@ async def input_event_name(message: Message, state: FSMContext) -> None:
     await message.answer(
         text="<b>Введите название события:</b>\nНапример, 'Вебинар по цифровому маркетингу'\n",
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="/предыдущий_шаг"),
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="/предыдущий_шаг"),
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
     await state.set_state(EventSurvey.event_name_inserted)
-
 
 
 @router.message(EventSurvey.event_name_inserted)
@@ -145,14 +146,14 @@ async def input_date_time(message: Message, state: FSMContext) -> None:
     await message.answer(
         text="<b>Хорошо, введите дату проведения события:</b>\nНапример, '25 октября 2024 года, 15:00 - 17:00'\n",
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="/предыдущий_шаг"),
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="/предыдущий_шаг"),
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
     await state.set_state(EventSurvey.date_time_inserted)
 
@@ -165,14 +166,14 @@ async def choosing_event_style(message: Message, state: FSMContext) -> None:
     await message.answer(
         text="<b>Теперь выберите вариант проведения мероприятия:</b>\n",
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="/предыдущий_шаг"),
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="/предыдущий_шаг"),
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
     await message.answer(
         text="<b>Доступные варианты:</b>\n\n",
@@ -188,14 +189,14 @@ async def input_location(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.message.answer(
         text="<b>Хорошо, введите местоположение события:</b>\nZoom (ссылка для подключения будет отправлена на email)",
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="/предыдущий_шаг"),
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="/предыдущий_шаг"),
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
     await state.set_state(EventSurvey.location_inserted)
 
@@ -210,14 +211,14 @@ async def input_description(message: Message, state: FSMContext) -> None:
              'цифрового маркетинга'
              '\nи получите практические советы от экспертов отрасли.\n',
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="/предыдущий_шаг"),
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="/предыдущий_шаг"),
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
     await state.set_state(EventSurvey.description_inserted)
 
@@ -230,14 +231,14 @@ async def input_contacts(message: Message, state: FSMContext) -> None:
     await message.answer(
         text="<b>Теперь введите свои контакты:</b>\nНапример, Иван Иванов @ivanivanov\n",
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="/предыдущий_шаг"),
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="/предыдущий_шаг"),
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
     await state.set_state(EventSurvey.contacts_inserted)
 
@@ -250,14 +251,14 @@ async def input_registration_url(message: Message, state: FSMContext) -> None:
     await message.answer(
         text="<b>Введите ссылку для регистрации на мероприятие:</b>\nНапример, 'https://example.com/register'\n",
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="/предыдущий_шаг"),
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="/предыдущий_шаг"),
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
     await state.set_state(EventSurvey.registration_url_inserted)
 
@@ -270,14 +271,14 @@ async def input_tags(message: Message, state: FSMContext) -> None:
     await message.answer(
         text="<b>Почти закончили! Введите теги:</b>\nНапример, маркетинг, вебинар, цифровые технологии, обучение\n",
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="/предыдущий_шаг"),
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="/предыдущий_шаг"),
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
     await state.set_state(EventSurvey.tags_inserted)
 
@@ -301,14 +302,14 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
     await message.answer(
         text="<b>Ваша анкета:</b>\n" + survey_text,
         reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text="Опубликовать анкету"),
-                            KeyboardButton(text="/Выход")
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
+            keyboard=[
+                [
+                    KeyboardButton(text="Опубликовать анкету"),
+                    KeyboardButton(text="/Выход")
+                ]
+            ],
+            resize_keyboard=True,
+        ),
     )
 
 
@@ -365,10 +366,10 @@ async def any_message_handler(message: Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state == "EventSurvey:choosing_group":
         await message.answer("Пожалуйста, используйте кнопки для ввода.", reply_markup=ReplyKeyboardRemove())
-        await cmd_choosing_group(message,state)
+        await cmd_choosing_group(message, state)
     elif current_state == "EventSurvey:choosing_event_style":
         await message.answer("Пожалуйста, используйте кнопки для ввода.", reply_markup=ReplyKeyboardRemove())
-        await choosing_event_style(message,state)
+        await choosing_event_style(message, state)
     else:
         await message.answer(
             "Я не знаю такой команды,\nнапишите /start"

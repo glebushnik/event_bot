@@ -5,29 +5,37 @@ import os
 
 from dotenv import load_dotenv
 
+from utils.variants import available_groups
+
 load_dotenv()
 
 from handlers import survey
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram import Bot, Dispatcher, html
+from aiogram import Bot, Dispatcher, html, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.types import Message, ReplyKeyboardRemove
 
 router = Router()
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-
 dp = Dispatcher(storage=MemoryStorage())
 
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message):
-    await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\nЯ – бот для публикации ивентов. Желаете продолжить?", reply_markup= ReplyKeyboardRemove())
-    await message.answer("\nВведи /survey, если хочешь начать заполнение.")
+    print(message.chat.username)
+    if "@"+message.chat.username in available_groups:
+        pass
+    else:
+        await message.answer(
+            f"Привет, {html.bold(message.from_user.full_name)}!\nЯ – бот для публикации ивентов. Желаете продолжить?",
+            reply_markup=ReplyKeyboardRemove())
+        await message.answer("\nВведи /survey, если хочешь начать заполнение.")
+
 
 
 
