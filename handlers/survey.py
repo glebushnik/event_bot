@@ -328,50 +328,51 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
 async def post_message(message: Message, state: FSMContext) -> None:
     if message.text == "Редактировать анкету":
         await edit_survey(message, state)
-    data = await state.get_data()
-    channel = data['chosen_group']
-    survey_text = data['survey_text']
-    chat_id_without_at = channel.replace("@", "")
-    existing_message = check_and_save_survey(data)
-    if existing_message:
-        await message.answer(
-            "Такая анкета уже есть! Заполните ее заново",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text="/start"),
-                    ]
-                ],
-                resize_keyboard=True,
-            )
-        )
     else:
-        await message.answer(
-            f"Анкета отправлена в чат: t.me/{chat_id_without_at}",
-            reply_markup=ReplyKeyboardRemove()
-        )
-
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        data = {
-            "chat_id": channel,
-            "text": survey_text,
-            "message_thread_id": None,
-            "parse_mode": "HTML"
-        }
-
-        response = requests.post(url, data=data)
-
-        await message.answer(
-            "Заполните еще одну анкету!",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text="/start"),
-                    ]
-                ],
-                resize_keyboard=True,
+        data = await state.get_data()
+        channel = data['chosen_group']
+        survey_text = data['survey_text']
+        chat_id_without_at = channel.replace("@", "")
+        existing_message = check_and_save_survey(data)
+        if existing_message:
+            await message.answer(
+                "Такая анкета уже есть! Заполните ее заново",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard=[
+                        [
+                            KeyboardButton(text="/start"),
+                        ]
+                    ],
+                    resize_keyboard=True,
+                )
             )
-        )
+        else:
+            await message.answer(
+                f"Анкета отправлена в чат: t.me/{chat_id_without_at}",
+                reply_markup=ReplyKeyboardRemove()
+            )
+
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            data = {
+                "chat_id": channel,
+                "text": survey_text,
+                "message_thread_id": None,
+                "parse_mode": "HTML"
+            }
+
+            response = requests.post(url, data=data)
+
+            await message.answer(
+                "Заполните еще одну анкету!",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard=[
+                        [
+                            KeyboardButton(text="/start"),
+                        ]
+                    ],
+                    resize_keyboard=True,
+                )
+            )
 
 
 async def edit_survey(message: Message, state: FSMContext) -> None:
