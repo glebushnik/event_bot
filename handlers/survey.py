@@ -9,7 +9,7 @@ from aiogram.types import Message, ReplyKeyboardRemove, ReplyKeyboardMarkup
 
 from db_utils.db_handler import check_and_save_survey
 from utils.texts import group_descriptions, message_example
-from utils.variants import available_groups, available_event_styles
+from utils.variants import available_groups, available_event_styles, survey_steps, event_data_dict
 from keyboards.inline_row import make_inline_keyboard
 import requests
 from aiogram.types import KeyboardButton
@@ -19,6 +19,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 
 class EventSurvey(StatesGroup):
+    update_edited_field = State()
+    edit_field = State()
     survey_finished = State()
     tags_inserted = State()
     input_tags = State()
@@ -293,7 +295,7 @@ async def input_tags(message: Message, state: FSMContext) -> None:
 
 @router.message(EventSurvey.tags_inserted)
 async def survey_finished(message: Message, state: FSMContext) -> None:
-    if message.text != "/предыдущий_шаг":
+    if message.text != "/предыдущий_шаг" and message.text != "Выберите поле, которое хотите отредактировать.\n\nДоступные варианты:":
         await state.update_data(event_tags=message.text)
     await state.set_state(EventSurvey.survey_finished)
     data = await state.get_data()
@@ -313,6 +315,7 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
             keyboard=[
                 [
                     KeyboardButton(text="Опубликовать анкету"),
+                    KeyboardButton(text="Редактировать анкету"),
                     KeyboardButton(text="/Выход")
                 ]
             ],
@@ -323,6 +326,8 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
 
 @router.message(EventSurvey.survey_finished)
 async def post_message(message: Message, state: FSMContext) -> None:
+    if message.text == "Редактировать анкету":
+        await edit_survey(message, state)
     data = await state.get_data()
     channel = data['chosen_group']
     survey_text = data['survey_text']
@@ -369,8 +374,61 @@ async def post_message(message: Message, state: FSMContext) -> None:
         )
 
 
+async def edit_survey(message: Message, state: FSMContext) -> None:
+    await message.answer(
+        text="Выберите поле, которое хотите отредактировать.\n\nДоступные варианты:",
+        reply_markup=make_inline_keyboard(survey_steps)
+    )
+    await state.set_state(EventSurvey.edit_field)
+
+
+@router.callback_query(EventSurvey.edit_field)
+async def edit_field(query: CallbackQuery, state: FSMContext) -> None:
+    if query.data == "Вернуться к анкете.":
+        await state.set_state(EventSurvey.tags_inserted)
+        await survey_finished(query.message, state)
+    else:
+        data = await state.get_data()
+        if query.data in event_data_dict:
+            editing_field_key = event_data_dict[query.data]
+            current_value = data.get(editing_field_key)
+
+            if current_value != "":
+                await query.message.answer(
+                    text=f"Сейчас поле {query.data} выглядит так: {current_value}."
+                )
+            else:
+                await query.message.answer(
+                    text=f"Сейчас поле {query.data} не заполнено."
+                )
+
+            await state.set_state(EventSurvey.update_edited_field)
+            await state.update_data(editing_field_key=editing_field_key)
+            await query.message.answer(
+                text="Заполните поле заново.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+        else:
+            await query.message.answer(text="Неизвестное поле для редактирования.")
+
+
+@router.message(EventSurvey.update_edited_field)
+async def update_edited_field(message: Message, state: FSMContext):
+    data = await state.get_data()
+    editing_field_key = data.get('editing_field_key')
+
+    await state.update_data(**{editing_field_key: message.text})
+
+    await message.reply(
+        text="Отлично, сохранил отредактированное поле."
+    )
+
+    await state.set_state(EventSurvey.tags_inserted)
+    await edit_survey(message, state)
+
+
 @router.message(F.text)
-async def any_message_handler(message: Message, state: FSMContext):
+async def any_message_handler(message: Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state == "EventSurvey:choosing_group":
         await message.answer("Пожалуйста, используйте кнопки для ввода.", reply_markup=ReplyKeyboardRemove())
