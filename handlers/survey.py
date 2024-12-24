@@ -1,18 +1,19 @@
 import os
 
-from aiogram import Router, F, types
+from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InlineKeyboardButton
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove, ReplyKeyboardMarkup
-
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from helpers.validation import extract_and_validate_url
 from db_utils.db_handler import check_and_save_survey
 from utils.texts import group_descriptions, message_example
 from utils.variants import available_groups, available_event_styles, survey_steps, event_data_dict
 from keyboards.inline_row import make_inline_keyboard
-import requests
 from aiogram.types import KeyboardButton
+from main import bot
 
 router = Router()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -54,6 +55,7 @@ async def intermediate_function(message: Message, state: FSMContext, callback_da
     )
 
     await input_location(callback_query, state)
+
 
 @router.message(Command("Выход"))
 async def exit_command(message: Message, state: FSMContext) -> None:
@@ -207,6 +209,10 @@ async def choosing_event_style(message: Message, state: FSMContext) -> None:
 async def input_location(callback: CallbackQuery, state: FSMContext) -> None:
     if callback.message.chat.id < 0:
         pass
+    elif callback.data == 'онлайн':
+        await state.update_data(event_style=callback.data)
+        await state.update_data(event_location='')
+        await input_description(callback.message, state)
     else:
         if callback.message.text != "/предыдущий_шаг":
             await state.update_data(event_style=callback.data)
@@ -305,22 +311,31 @@ async def input_tags(message: Message, state: FSMContext) -> None:
     if message.chat.id < 0:
         pass
     else:
-        if message.text != "/предыдущий_шаг":
-            await state.update_data(event_url=message.text)
-        await state.set_state(EventSurvey.input_tags)
-        await message.answer(
-            text="<b>Почти закончили! Введите теги:</b>\nНапример, маркетинг, вебинар, цифровые технологии, обучение\n",
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text="/предыдущий_шаг"),
-                        KeyboardButton(text="/Выход")
-                    ]
-                ],
-                resize_keyboard=True,
-            ),
-        )
-        await state.set_state(EventSurvey.tags_inserted)
+        if extract_and_validate_url(message.text) is None:
+            await message.answer(
+                text=
+                "К сожалению, предоставленная вами ссылка не валидна. "
+                "Пожалуйста, убедитесь, что ссылка корректна. Например, она может выглядеть так: "
+                "example.com или https://example.com."
+            )
+            await input_registration_url(message, state)
+        else:
+            if message.text != "/предыдущий_шаг":
+                await state.update_data(event_url=message.text)
+            await state.set_state(EventSurvey.input_tags)
+            await message.answer(
+                text="<b>Почти закончили! Введите теги:</b>\nНапример, маркетинг, вебинар, цифровые технологии, обучение\n",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard=[
+                        [
+                            KeyboardButton(text="/предыдущий_шаг"),
+                            KeyboardButton(text="/Выход")
+                        ]
+                    ],
+                    resize_keyboard=True,
+                ),
+            )
+            await state.set_state(EventSurvey.tags_inserted)
 
 
 @router.message(EventSurvey.tags_inserted)
@@ -329,18 +344,20 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
         pass
     else:
         if message.text != "/предыдущий_шаг" and message.text != "Выберите поле, которое хотите отредактировать.\n\nДоступные варианты:":
-            await state.update_data(event_tags=message.text)
+            output_string = '\n' + ' '.join(
+                f'#{word}' if not word.startswith('#') else word for word in message.text.split())
+            await state.update_data(event_tags=output_string)
         await state.set_state(EventSurvey.survey_finished)
         data = await state.get_data()
         survey_text = ""
-        survey_text += f"<b>Название мероприятия: </b> {data['event_name']}\n"
-        survey_text += f"<b>Дата и время: </b> {data['event_date']}\n"
+        survey_text += f"<b>{data['event_name']}</b>\n"
+        survey_text += f"<b>{data['event_date']}</b>\n"
         survey_text += f"<b>Формат мероприятия: </b> {data['event_style']}\n"
-        survey_text += f"<b>Местоположение: </b> {data['event_location']}\n"
+        if data['event_location'] != '':
+            survey_text += f"<b>Местоположение: </b> {data['event_location']}\n"
         survey_text += f"<b>Описание: </b> {data['event_description']}\n"
         survey_text += f"<b>Контактная информация: </b> {data['event_contacts']}\n"
-        survey_text += f"<b>Ссылка на регистрацию: </b> {data['event_url']}\n"
-        survey_text += f"<b>Ключевые слова(теги): </b> {data['event_tags']}\n"
+        survey_text += f"{data['event_tags']}\n"
         await state.update_data(survey_text=survey_text)
         await message.answer(
             text="<b>Ваша анкета:</b>\n" + survey_text,
@@ -388,16 +405,18 @@ async def post_message(message: Message, state: FSMContext) -> None:
                     reply_markup=ReplyKeyboardRemove()
                 )
 
-                url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-                data = {
-                    "chat_id": channel,
-                    "text": survey_text,
-                    "message_thread_id": None,
-                    "parse_mode": "HTML"
-                }
-
-                response = requests.post(url, data=data)
-
+                builder = InlineKeyboardBuilder()
+                builder.row(InlineKeyboardButton(
+                    text="Ссылка для регистрации", url=data['event_url']
+                ))
+                keyboard = builder.as_markup()
+                await bot.send_message(
+                    chat_id=channel,
+                    text=survey_text,
+                    reply_markup=keyboard,
+                    message_thread_id=None,
+                    parse_mode="HTML"
+                )
                 await message.answer(
                     "Заполните еще одну анкету!",
                     reply_markup=ReplyKeyboardMarkup(

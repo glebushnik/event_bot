@@ -2,6 +2,7 @@ available_groups = [
     "@itsysdes_events",
     "@product_events",
     "@data_analysis_jobs",
+    "@tgbotdevchat",
 ]
 
 available_event_styles = [

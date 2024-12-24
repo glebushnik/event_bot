@@ -22,6 +22,8 @@ router = Router()
 
 TOKEN = os.getenv("BOT_TOKEN")
 
+bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
 dp = Dispatcher(storage=MemoryStorage())
 
 
@@ -40,7 +42,6 @@ async def command_start_handler(message: Message):
 
 async def main() -> None:
     # Initialize Bot instance with default bot properties which will be passed to all API calls
-    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
     dp.include_router(survey.router)
     # And the run events dispatching
