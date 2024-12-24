@@ -349,6 +349,10 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
             await state.update_data(event_tags=output_string)
         await state.set_state(EventSurvey.survey_finished)
         data = await state.get_data()
+
+        await message.answer(
+            text="Вы можете добавить фото к карточке вашего мероприятия. Просто пришлите его мне."
+        )
         survey_text = ""
         survey_text += f"<b>{data['event_name']}</b>\n"
         survey_text += f"<b>{data['event_date']}</b>\n"
@@ -360,12 +364,12 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
         survey_text += f"{data['event_tags']}\n"
         await state.update_data(survey_text=survey_text)
         await message.answer(
-            text="<b>Ваша анкета:</b>\n" + survey_text,
+            text="<b>Ваш ивент:</b>\n" + survey_text,
             reply_markup=ReplyKeyboardMarkup(
                 keyboard=[
                     [
-                        KeyboardButton(text="Опубликовать анкету"),
-                        KeyboardButton(text="Редактировать анкету"),
+                        KeyboardButton(text="Опубликовать ивент"),
+                        KeyboardButton(text="Редактировать ивент"),
                         KeyboardButton(text="/Выход")
                     ]
                 ],
@@ -379,7 +383,7 @@ async def post_message(message: Message, state: FSMContext) -> None:
     if message.chat.id < 0:
         pass
     else:
-        if message.text == "Редактировать анкету":
+        if message.text == "Редактировать ивент":
             await edit_survey(message, state)
         else:
             data = await state.get_data()
@@ -389,7 +393,7 @@ async def post_message(message: Message, state: FSMContext) -> None:
             existing_message = check_and_save_survey(data)
             if existing_message:
                 await message.answer(
-                    "Такая анкета уже есть! Заполните ее заново",
+                    "Такой ивент уже есть! Создайте новый!",
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard=[
                             [
@@ -401,7 +405,7 @@ async def post_message(message: Message, state: FSMContext) -> None:
                 )
             else:
                 await message.answer(
-                    f"Анкета отправлена в чат: t.me/{chat_id_without_at}",
+                    f"Ивент отправлен в чат: t.me/{chat_id_without_at}",
                     reply_markup=ReplyKeyboardRemove()
                 )
 
@@ -418,7 +422,7 @@ async def post_message(message: Message, state: FSMContext) -> None:
                     parse_mode="HTML"
                 )
                 await message.answer(
-                    "Заполните еще одну анкету!",
+                    "Создайте еще один ивент!",
                     reply_markup=ReplyKeyboardMarkup(
                         keyboard=[
                             [
