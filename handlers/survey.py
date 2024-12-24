@@ -20,6 +20,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 
 class EventSurvey(StatesGroup):
+    survey_finished_photo = State()
     update_edited_field = State()
     edit_field = State()
     survey_finished = State()
@@ -349,10 +350,6 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
             await state.update_data(event_tags=output_string)
         await state.set_state(EventSurvey.survey_finished)
         data = await state.get_data()
-
-        await message.answer(
-            text="Вы можете добавить фото к карточке вашего мероприятия. Просто пришлите его мне."
-        )
         survey_text = ""
         survey_text += f"<b>{data['event_name']}</b>\n"
         survey_text += f"<b>{data['event_date']}</b>\n"
@@ -370,6 +367,7 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
                     [
                         KeyboardButton(text="Опубликовать ивент"),
                         KeyboardButton(text="Редактировать ивент"),
+                        KeyboardButton(text="Добавить фото ивента"),
                         KeyboardButton(text="/Выход")
                     ]
                 ],
@@ -378,60 +376,128 @@ async def survey_finished(message: Message, state: FSMContext) -> None:
         )
 
 
+async def process_event_photo(message: Message, state: FSMContext) -> None:
+    if message.chat.id < 0:
+        pass
+    else:
+        await message.answer(
+            text="Вы можете добавить фото к карточке вашего мероприятия. Просто пришлите его мне."
+        )
+
+        await state.set_state(EventSurvey.survey_finished_photo)
+
+
+@router.message(EventSurvey.survey_finished_photo)
+async def post_message_with_photo(message: Message, state: FSMContext) -> None:
+    if message.chat.id < 0:
+        pass
+    else:
+        data = await state.get_data()
+        channel = data['chosen_group']
+        survey_text = data['survey_text']
+        chat_id_without_at = channel.replace("@", "")
+        existing_message = check_and_save_survey(data)
+        if existing_message:
+            await message.answer(
+                "Такой ивент уже есть! Создайте новый!",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard=[
+                        [
+                            KeyboardButton(text="/start"),
+                        ]
+                    ],
+                    resize_keyboard=True,
+                )
+            )
+        else:
+            await message.answer(
+                f"Ивент отправлен в чат: t.me/{chat_id_without_at}",
+                reply_markup=ReplyKeyboardRemove()
+            )
+
+            builder = InlineKeyboardBuilder()
+            builder.row(InlineKeyboardButton(
+                text="Ссылка для регистрации", url=data['event_url']
+            ))
+            keyboard = builder.as_markup()
+            photo = message.photo[-1]
+            photo_file_id = photo.file_id
+
+            await bot.send_photo(
+                chat_id=channel,
+                caption=survey_text,
+                photo=photo_file_id,
+                parse_mode="HTML",
+                reply_markup=keyboard
+            )
+            await message.answer(
+                "Создайте еще один ивент!",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard=[
+                        [
+                            KeyboardButton(text="/start"),
+                        ]
+                    ],
+                    resize_keyboard=True,
+                )
+            )
 @router.message(EventSurvey.survey_finished)
 async def post_message(message: Message, state: FSMContext) -> None:
     if message.chat.id < 0:
         pass
     else:
-        if message.text == "Редактировать ивент":
-            await edit_survey(message, state)
+        if message.text == "Добавить фото ивента":
+            await process_event_photo(message,state)
         else:
-            data = await state.get_data()
-            channel = data['chosen_group']
-            survey_text = data['survey_text']
-            chat_id_without_at = channel.replace("@", "")
-            existing_message = check_and_save_survey(data)
-            if existing_message:
-                await message.answer(
-                    "Такой ивент уже есть! Создайте новый!",
-                    reply_markup=ReplyKeyboardMarkup(
-                        keyboard=[
-                            [
-                                KeyboardButton(text="/start"),
-                            ]
-                        ],
-                        resize_keyboard=True,
-                    )
-                )
+            if message.text == "Редактировать ивент":
+                await edit_survey(message, state)
             else:
-                await message.answer(
-                    f"Ивент отправлен в чат: t.me/{chat_id_without_at}",
-                    reply_markup=ReplyKeyboardRemove()
-                )
-
-                builder = InlineKeyboardBuilder()
-                builder.row(InlineKeyboardButton(
-                    text="Ссылка для регистрации", url=data['event_url']
-                ))
-                keyboard = builder.as_markup()
-                await bot.send_message(
-                    chat_id=channel,
-                    text=survey_text,
-                    reply_markup=keyboard,
-                    message_thread_id=None,
-                    parse_mode="HTML"
-                )
-                await message.answer(
-                    "Создайте еще один ивент!",
-                    reply_markup=ReplyKeyboardMarkup(
-                        keyboard=[
-                            [
-                                KeyboardButton(text="/start"),
-                            ]
-                        ],
-                        resize_keyboard=True,
+                data = await state.get_data()
+                channel = data['chosen_group']
+                survey_text = data['survey_text']
+                chat_id_without_at = channel.replace("@", "")
+                existing_message = check_and_save_survey(data)
+                if existing_message:
+                    await message.answer(
+                        "Такой ивент уже есть! Создайте новый!",
+                        reply_markup=ReplyKeyboardMarkup(
+                            keyboard=[
+                                [
+                                    KeyboardButton(text="/start"),
+                                ]
+                            ],
+                            resize_keyboard=True,
+                        )
                     )
-                )
+                else:
+                    await message.answer(
+                        f"Ивент отправлен в чат: t.me/{chat_id_without_at}",
+                        reply_markup=ReplyKeyboardRemove()
+                    )
+
+                    builder = InlineKeyboardBuilder()
+                    builder.row(InlineKeyboardButton(
+                        text="Ссылка для регистрации", url=data['event_url']
+                    ))
+                    keyboard = builder.as_markup()
+                    await bot.send_message(
+                        chat_id=channel,
+                        text=survey_text,
+                        reply_markup=keyboard,
+                        message_thread_id=None,
+                        parse_mode="HTML"
+                    )
+                    await message.answer(
+                        "Создайте еще один ивент!",
+                        reply_markup=ReplyKeyboardMarkup(
+                            keyboard=[
+                                [
+                                    KeyboardButton(text="/start"),
+                                ]
+                            ],
+                            resize_keyboard=True,
+                        )
+                    )
 
 
 async def edit_survey(message: Message, state: FSMContext) -> None:
